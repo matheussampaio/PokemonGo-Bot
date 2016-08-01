@@ -35,6 +35,7 @@ class PokemonGoBot(object):
     def __init__(self, config):
         self.config = config
         self.fort_timeouts = dict()
+        self.fort_lured_timeouts = dict()
         self.pokemon_list = json.load(
             open(os.path.join('data', 'pokemon.json'))
         )
@@ -535,6 +536,9 @@ class PokemonGoBot(object):
     def heartbeat(self):
         # Remove forts that we can now spin again.
         self.fort_timeouts = {id: timeout for id, timeout
+                              in self.fort_timeouts.iteritems()
+                              if timeout >= time.time() * 1000}
+        self.fort_lured_timeouts = {id: timeout for id, timeout
                               in self.fort_timeouts.iteritems()
                               if timeout >= time.time() * 1000}
         self.api.get_player()

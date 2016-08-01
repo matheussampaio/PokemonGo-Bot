@@ -344,7 +344,7 @@ def init_config():
         long_flag="--map_object_cache_time",
         help="Amount of seconds to keep the map object in cache (bypass Niantic throttling)",
         type=float,
-        default=1.0
+        default=5.0
     )
 
     # Start to parse other attrs

@@ -14,9 +14,6 @@ class MoveToFort(BaseTask):
         return has_space_for_loot or self.bot.softban
 
     def work(self):
-        if not self.should_run():
-            return WorkerResult.SUCCESS
-
         nearest_fort = self.get_nearest_fort()
 
         if nearest_fort is None:
@@ -55,6 +52,9 @@ class MoveToFort(BaseTask):
 
     def get_nearest_fort(self):
         forts = self.bot.get_forts(order_by_distance=True)
+
+        # remove forts with cooldown
+        forts = filter(lambda x: 'cooldown_complete_timestamp_ms' not in x, forts)
 
         # Remove stops that are still on timeout
         forts = filter(lambda x: x["id"] not in self.bot.fort_timeouts, forts)

@@ -19,12 +19,18 @@ class SpinFort(BaseTask):
             return False
         return True
 
+
     def work(self):
-        fort = self.get_fort_in_range()
+        forts = self.get_fort_in_range()
 
-        if not self.should_run() or fort is None:
-            return WorkerResult.SUCCESS
+        # max 3 forts per tick
+        for fort in forts[:3]:
+            self.spin_fort(fort)
 
+        return WorkerResult.SUCCESS
+
+
+    def spin_fort(self, fort):
         lat = fort['latitude']
         lng = fort['longitude']
 
@@ -95,7 +101,12 @@ class SpinFort(BaseTask):
                         format_time((pokestop_cooldown / 1000) -
                                     seconds_since_epoch)))
             elif spin_result == 4:
-                logger.log("Inventory is full", 'red')
+                xp = spin_details.get('experience_awarded', False)
+
+                if xp:
+                    xp_str = ' [+{} xp]'.format(xp)
+
+                logger.log("Inventory is full{}".format(xp_str), 'red')
             else:
                 logger.log("Unknown spin result: " + str(spin_result), 'red')
 
@@ -112,27 +123,30 @@ class SpinFort(BaseTask):
                 else:
                     self.bot.fort_timeouts[fort["id"]] = (time.time() + 300) * 1000  # Don't spin for 5m
                 return 11
-        sleep(2)
         return 0
+
 
     def get_fort_in_range(self):
         forts = self.bot.get_forts(order_by_distance=True)
 
+        # remove forts with cooldown
+        forts = filter(lambda x: 'cooldown_complete_timestamp_ms' not in x, forts)
+
+        # remove forts in timeout list
         forts = filter(lambda x: x["id"] not in self.bot.fort_timeouts, forts)
 
-        if len(forts) == 0:
-            return None
+        in_range_forts = []
 
-        fort = forts[0]
+        # remove forts too far
+        for fort in forts:
+            distance_to_fort = distance(
+                self.bot.position[0],
+                self.bot.position[1],
+                fort['latitude'],
+                fort['longitude']
+            )
 
-        distance_to_fort = distance(
-            self.bot.position[0],
-            self.bot.position[1],
-            fort['latitude'],
-            fort['longitude']
-        )
+            if distance_to_fort <= Constants.MAX_DISTANCE_FORT_IS_REACHABLE:
+                in_range_forts.append(fort)
 
-        if distance_to_fort <= Constants.MAX_DISTANCE_FORT_IS_REACHABLE:
-            return fort
-
-        return None
+        return in_range_forts
