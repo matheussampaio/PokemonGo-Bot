@@ -616,7 +616,7 @@ class PokemonGoBot(object):
         return forts
 
     def get_map_objects(self, lat, lng, timestamp, cellid):
-        if time.time() - self.last_time_map_object < 5:
+        if time.time() - self.last_time_map_object < self.config.map_object_cache_time:
             return self.last_map_object
 
         self.api.get_map_objects(
