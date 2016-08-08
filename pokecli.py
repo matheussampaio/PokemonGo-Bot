@@ -33,6 +33,7 @@ import os
 import ssl
 import sys
 import time
+import traceback
 from datetime import timedelta
 from getpass import getpass
 from pgoapi.exceptions import NotLoggedInException, ServerSideRequestThrottlingException, ServerBusyOrOfflineException
@@ -129,6 +130,7 @@ def main():
         if bot:
             report_summary(bot)
 
+        traceback.print_exc()
         raise e
 
 def report_summary(bot):
